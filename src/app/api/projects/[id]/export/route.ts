@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Get session token from cookies
@@ -21,9 +21,8 @@ export async function POST(
     }
 
     const adminClient = await createAdminClient();
-    // Extract projectId from params properly by awaiting params first
-    const projectParams = await params;
-    const projectId = String(projectParams.id);
+    // Extract projectId from params
+    const projectId = String(params.id);
     const { format } = await request.json(); // 'pdf' or 'csv'
 
     // Check user token balance

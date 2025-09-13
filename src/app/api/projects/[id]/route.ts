@@ -4,12 +4,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     console.log('=== GET PROJECT DETAILS API ===');
-    const projectParams = await params;
-    const projectId = projectParams.id;
+    const projectId = String(params.id);
     console.log('Project ID:', projectId);
     
     // Log all cookies to debug
@@ -87,11 +86,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const projectParams = await params;
-    const projectId = projectParams.id;
+    const projectId = String(params.id);
     
     const sessionToken = request.cookies.get('session-token')?.value;
     
