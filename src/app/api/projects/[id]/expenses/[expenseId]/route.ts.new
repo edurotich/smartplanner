@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; incomeId: string }> }
+  { params }: { params: Promise<{ id: string; expenseId: string }> }
 ) {
   try {
     // Get session token from cookies
@@ -23,11 +23,11 @@ export async function GET(
     const adminClient = await createAdminClient();
     const paramsData = await params;
     const projectId = String(paramsData.id);
-    const incomeId = String(paramsData.incomeId);
+    const expenseId = String(paramsData.expenseId);
 
-    // Get income with project verification
-    const { data: income, error } = await adminClient
-      .from('income')
+    // Get expense with project verification
+    const { data: expense, error } = await adminClient
+      .from('expenses')
       .select(`
         *,
         projects!inner(
@@ -35,26 +35,26 @@ export async function GET(
           user_id
         )
       `)
-      .eq('id', incomeId)
+      .eq('id', expenseId)
       .eq('project_id', projectId)
       .eq('projects.user_id', userSession.user.id)
       .single();
 
     if (error) {
-      console.error('Error fetching income:', error);
-      return NextResponse.json({ error: 'Income not found' }, { status: 404 });
+      console.error('Error fetching expense:', error);
+      return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ income });
+    return NextResponse.json({ expense });
   } catch (error) {
-    console.error('Error in income GET:', error);
+    console.error('Error in expense GET:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; incomeId: string }> }
+  { params }: { params: Promise<{ id: string; expenseId: string }> }
 ) {
   try {
     // Get session token from cookies
@@ -73,54 +73,47 @@ export async function PUT(
     const adminClient = await createAdminClient();
     const paramsData = await params;
     const projectId = String(paramsData.id);
-    const incomeId = String(paramsData.incomeId);
+    const expenseId = String(paramsData.expenseId);
     const body = await request.json();
-    const { source, amount, date } = body;
+    const { title, category, amount, date } = body;
 
     // Validate required fields
-    if (!source || !amount || !date) {
+    if (!title || !category || !amount || !date) {
       return NextResponse.json({ 
-        error: 'Source, amount, and date are required' 
+        error: 'Title, category, amount, and date are required' 
       }, { status: 400 });
     }
 
-    // Verify ownership and update income
-    const { data: income, error } = await adminClient
-      .from('income')
+    // Verify ownership and update expense
+    const { data: expense, error } = await adminClient
+      .from('expenses')
       .update({
-        source: source.trim(),
+        title: title.trim(),
+        category: category.trim(),
         amount: parseFloat(amount),
-        date
+        date,
+        updated_at: new Date().toISOString(),
       })
-      .eq('id', incomeId)
+      .eq('id', expenseId)
       .eq('project_id', projectId)
-      .select(`
-        *,
-        projects!inner(
-          id,
-          user_id
-        )
-      `)
+      .select()
       .single();
 
-    if (error || !income || income.projects.user_id !== userSession.user.id) {
-      console.error('Error updating income:', error);
-      return NextResponse.json({ error: 'Failed to update income' }, { status: 500 });
+    if (error) {
+      console.error('Error updating expense:', error);
+      return NextResponse.json({ error: 'Failed to update expense' }, { status: 500 });
     }
 
-    return NextResponse.json({ 
-      message: 'Income updated successfully',
-      income 
-    });
+    return NextResponse.json(expense);
   } catch (error) {
-    console.error('Error in income PUT:', error);
+    console.error('Error in expense PUT:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; incomeId: string }> }
+  { params }: { params: Promise<{ id: string; expenseId: string }> }
 ) {
   try {
     // Get session token from cookies
@@ -139,7 +132,7 @@ export async function DELETE(
     const adminClient = await createAdminClient();
     const paramsData = await params;
     const projectId = String(paramsData.id);
-    const incomeId = String(paramsData.incomeId);
+    const expenseId = String(paramsData.expenseId);
 
     // First verify project ownership
     const { data: project } = await adminClient
@@ -153,21 +146,23 @@ export async function DELETE(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Delete income
+    // Delete the expense
     const { error } = await adminClient
-      .from('income')
+      .from('expenses')
       .delete()
-      .eq('id', incomeId)
+      .eq('id', expenseId)
       .eq('project_id', projectId);
 
     if (error) {
-      console.error('Error deleting income:', error);
-      return NextResponse.json({ error: 'Failed to delete income' }, { status: 500 });
+      console.error('Error deleting expense:', error);
+      return NextResponse.json({ error: 'Failed to delete expense' }, { status: 500 });
     }
 
-    return NextResponse.json({ message: 'Income deleted successfully' });
+    return NextResponse.json({ 
+      message: 'Expense deleted successfully' 
+    });
   } catch (error) {
-    console.error('Error in income DELETE:', error);
+    console.error('Error in expense DELETE:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

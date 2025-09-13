@@ -140,7 +140,7 @@ export default function DebugPage() {
             </CardHeader>
             <CardContent>
               <div className="mb-4">
-                <Badge variant={sessionInfo ? "success" : "destructive"}>
+                <Badge variant={sessionInfo ? "default" : "destructive"}>
                   {sessionInfo ? "Authenticated" : "Not Authenticated"}
                 </Badge>
                 {userTokens !== null && (

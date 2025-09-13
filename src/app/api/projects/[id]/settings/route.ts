@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
@@ -17,6 +17,8 @@ export async function PUT(
 
     // Get the request body
     const { taxRate, reinvestmentRate } = await request.json();
+    const paramsData = await params;
+    const projectId = String(paramsData.id);
 
     // Validate inputs
     if (
@@ -42,25 +44,7 @@ export async function PUT(
       );
     }
 
-    // Extract project ID from params
-    const projectId = String(params.id);
-
-    // First verify the project belongs to the user
-    const { data: project, error: projectError } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('id', projectId)
-      .eq('user_id', session.user.id)
-      .single();
-
-    if (projectError || !project) {
-      return NextResponse.json(
-        { error: 'Project not found or unauthorized' },
-        { status: 404 }
-      );
-    }
-
-    // Update the project settings
+    // Verify ownership and update project
     const { data, error } = await supabase
       .from('projects')
       .update({
@@ -69,7 +53,9 @@ export async function PUT(
         updated_at: new Date().toISOString(),
       })
       .eq('id', projectId)
-      .select();
+      .eq('user_id', session.user.id)
+      .select('*')
+      .single();
 
     if (error) {
       console.error('Error updating project settings:', error);
@@ -79,7 +65,17 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(data[0]);
+    if (!data) {
+      return NextResponse.json(
+        { error: 'Project not found or unauthorized' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      message: 'Project settings updated successfully',
+      project: data
+    });
   } catch (error) {
     console.error('Error handling project settings update:', error);
     return NextResponse.json(

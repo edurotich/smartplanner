@@ -4,11 +4,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     console.log('=== GET PROJECT DETAILS API ===');
-    const projectId = String(params.id);
+    const paramsData = await params;
+    const projectId = String(paramsData.id);
     console.log('Project ID:', projectId);
     
     // Log all cookies to debug
@@ -48,15 +49,20 @@ export async function GET(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    console.log('Project found, returning data');
-    const totalExpenses = project.expenses?.reduce((sum: number, exp: any) => sum + exp.amount, 0) || 0;
-    const totalIncome = project.income?.reduce((sum: number, inc: any) => sum + inc.amount, 0) || 0;
-
-    // Calculate financial metrics
+    console.log('Project found:', project.name);
+    
+    // Calculate summary stats
+    const expenses = project.expenses || [];
+    const income = project.income || [];
+    
+    const totalExpenses = expenses.reduce((sum: number, exp: any) => sum + exp.amount, 0);
+    const totalIncome = income.reduce((sum: number, inc: any) => sum + inc.amount, 0);
+    
     const profit = totalIncome - totalExpenses;
     const profitMargin = totalIncome > 0 ? (profit / totalIncome) * 100 : 0;
+    
     const budgetUsed = project.boq_budget > 0 ? (totalExpenses / project.boq_budget) * 100 : 0;
-    const budgetRemaining = project.boq_budget - totalExpenses;
+    const budgetRemaining = project.boq_budget > 0 ? project.boq_budget - totalExpenses : 0;
     
     // Calculate tax and reinvestment
     const taxAmount = profit > 0 ? (profit * project.tax_rate / 100) : 0;
@@ -86,10 +92,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const projectId = String(params.id);
+    const paramsData = await params;
+    const projectId = String(paramsData.id);
     
     const sessionToken = request.cookies.get('session-token')?.value;
     
@@ -102,30 +109,19 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
-    // Get the request body
-    const { name, description, boqBudget } = await request.json();
+    const { name, description, boqBudget, taxRate, reinvestmentRate } = await request.json();
 
-    // Validate inputs
-    if (!name || name.trim() === '') {
-      return NextResponse.json(
-        { error: 'Project name is required' },
-        { status: 400 }
-      );
-    }
-
-    if (boqBudget !== undefined && isNaN(parseFloat(boqBudget))) {
-      return NextResponse.json(
-        { error: 'Budget must be a valid number' },
-        { status: 400 }
-      );
+    // Validate required fields
+    if (!name) {
+      return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
     }
 
     const adminClient = await createAdminClient();
 
-    // First verify the project belongs to the user
+    // Verify project ownership
     const { data: project, error: projectError } = await adminClient
       .from('projects')
-      .select('*')
+      .select('id')
       .eq('id', projectId)
       .eq('user_id', userSession.user.id)
       .single();
@@ -160,6 +156,66 @@ export async function PUT(
     return NextResponse.json(data[0]);
   } catch (error) {
     console.error('Error handling project update:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const paramsData = await params;
+    const projectId = String(paramsData.id);
+    
+    const sessionToken = request.cookies.get('session-token')?.value;
+    
+    if (!sessionToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userSession = await PhoneAuthService.validateSession(sessionToken);
+    if (!userSession?.user) {
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
+
+    const adminClient = await createAdminClient();
+
+    // Verify project ownership
+    const { data: project, error: projectError } = await adminClient
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', userSession.user.id)
+      .single();
+
+    if (projectError || !project) {
+      return NextResponse.json(
+        { error: 'Project not found or unauthorized' },
+        { status: 404 }
+      );
+    }
+
+    // Delete the project (this should cascade to expenses and income with Supabase RLS)
+    const { error } = await adminClient
+      .from('projects')
+      .delete()
+      .eq('id', projectId);
+
+    if (error) {
+      console.error('Error deleting project:', error);
+      return NextResponse.json(
+        { error: 'Failed to delete project' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ message: 'Project deleted successfully' });
+  } catch (error) {
+    console.error('Error handling project deletion:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

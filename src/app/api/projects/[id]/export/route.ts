@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session token from cookies
@@ -21,8 +21,8 @@ export async function POST(
     }
 
     const adminClient = await createAdminClient();
-    // Extract projectId from params
-    const projectId = String(params.id);
+    const paramsData = await params;
+    const projectId = String(paramsData.id);
     const { format } = await request.json(); // 'pdf' or 'csv'
 
     // Check user token balance
@@ -38,33 +38,14 @@ export async function POST(
 
     if (userTokens.balance < 5) {
       return NextResponse.json({ 
-        error: 'Insufficient tokens. Export requires 5 tokens.', 
-        tokensRequired: 5,
-        currentBalance: userTokens.balance 
-      }, { status: 402 });
+        error: 'Insufficient tokens. 5 tokens required to export data.' 
+      }, { status: 402 }); // 402 Payment Required
     }
 
-    // Get project with all data
+    // Get project details
     const { data: project, error: projectError } = await adminClient
       .from('projects')
-      .select(`
-        *,
-        expenses(
-          id,
-          title,
-          category,
-          amount,
-          date,
-          created_at
-        ),
-        income(
-          id,
-          source,
-          amount,
-          date,
-          created_at
-        )
-      `)
+      .select('*')
       .eq('id', projectId)
       .eq('user_id', userSession.user.id)
       .single();
@@ -73,65 +54,67 @@ export async function POST(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Calculate financial metrics
-    const totalExpenses = project.expenses?.reduce((sum: number, expense: any) => sum + expense.amount, 0) || 0;
-    const totalIncome = project.income?.reduce((sum: number, income: any) => sum + income.amount, 0) || 0;
-    const profit = totalIncome - totalExpenses;
-    const profitMargin = totalIncome > 0 ? (profit / totalIncome) * 100 : 0;
-    const budgetUsed = project.boq_budget > 0 ? (totalExpenses / project.boq_budget) * 100 : 0;
-    const budgetRemaining = project.boq_budget - totalExpenses;
-    
-    // Tax calculations
-    const taxableIncome = Math.max(0, profit);
-    const taxAmount = (taxableIncome * project.tax_rate) / 100;
-    const netProfit = profit - taxAmount;
-    
-    // Reinvestment calculations
-    const reinvestmentAmount = (netProfit * project.reinvestment_rate) / 100;
-    const finalProfit = netProfit - reinvestmentAmount;
+    // Get expenses and income
+    const { data: expenses, error: expenseError } = await adminClient
+      .from('expenses')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('date', { ascending: false });
 
-    // Deduct 5 tokens
-    const { error: deductError } = await adminClient
-      .from('user_tokens')
-      .update({ balance: userTokens.balance - 5 })
-      .eq('user_id', userSession.user.id);
-
-    if (deductError) {
-      console.error('Error deducting tokens:', deductError);
-      return NextResponse.json({ error: 'Failed to process payment' }, { status: 500 });
+    if (expenseError) {
+      return NextResponse.json({ error: 'Failed to fetch expenses' }, { status: 500 });
     }
 
-    // Prepare report data
-    const reportData = {
-      project: {
-        ...project,
-        total_expenses: totalExpenses,
-        total_income: totalIncome,
-        profit,
-        profit_margin: profitMargin,
-        budget_used: budgetUsed,
-        budget_remaining: budgetRemaining,
-        tax_amount: taxAmount,
-        net_profit: netProfit,
-        reinvestment_amount: reinvestmentAmount,
-        final_profit: finalProfit
+    const { data: income, error: incomeError } = await adminClient
+      .from('income')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('date', { ascending: false });
+
+    if (incomeError) {
+      return NextResponse.json({ error: 'Failed to fetch income' }, { status: 500 });
+    }
+
+    // Deduct tokens for the export
+    const tokensToDeduct = 5; // Cost to export data
+    const { error: updateTokensError } = await adminClient
+      .from('user_tokens')
+      .update({ 
+        balance: userTokens.balance - tokensToDeduct,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userSession.user.id);
+
+    if (updateTokensError) {
+      console.error('Error updating tokens:', updateTokensError);
+      return NextResponse.json({ error: 'Failed to update token balance' }, { status: 500 });
+    }
+
+    // Get the updated token balance
+    const { data: updatedTokens } = await adminClient
+      .from('user_tokens')
+      .select('balance')
+      .eq('user_id', userSession.user.id)
+      .single();
+
+    const remainingBalance = updatedTokens?.balance || 0;
+
+    // Return the data based on the requested format
+    return NextResponse.json({
+      message: 'Project data exported successfully',
+      data: {
+        project,
+        expenses,
+        income,
+        generatedAt: new Date().toISOString(),
+        tokensDeducted: tokensToDeduct,
+        remainingBalance
       },
-      expenses: project.expenses || [],
-      income: project.income || [],
-      generatedAt: new Date().toISOString(),
-      tokensDeducted: 5,
-      remainingBalance: userTokens.balance - 5
-    };
-
-    return NextResponse.json({ 
-      message: `Report data prepared for ${format.toUpperCase()} export`,
-      data: reportData,
-      tokensDeducted: 5,
-      remainingBalance: userTokens.balance - 5
+      tokensDeducted: tokensToDeduct,
+      remainingBalance
     });
-
   } catch (error) {
-    console.error('Error in export route:', error);
+    console.error('Error in export:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

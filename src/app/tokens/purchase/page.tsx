@@ -164,7 +164,7 @@ export default function TokenPurchasePage() {
   // Format phone number to ensure it's in the correct format for M-PESA
   const formatPhoneForMpesa = (phone: string): string => {
     // Remove any non-digit characters
-    let digitsOnly = phone.replace(/\D/g, '')
+    const digitsOnly = phone.replace(/\D/g, '')
     
     // Handle different formats
     if (digitsOnly.startsWith('254')) {

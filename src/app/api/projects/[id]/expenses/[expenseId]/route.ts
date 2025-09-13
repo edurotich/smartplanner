@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; expenseId: string } }
+  { params }: { params: Promise<{ id: string; expenseId: string }> }
 ) {
   try {
     // Get session token from cookies
@@ -21,8 +21,9 @@ export async function GET(
     }
 
     const adminClient = await createAdminClient();
-    const projectId = String(params.id);
-    const expenseId = String(params.expenseId);
+    const paramsData = await params;
+    const projectId = String(paramsData.id);
+    const expenseId = String(paramsData.expenseId);
 
     // Get expense with project verification
     const { data: expense, error } = await adminClient
@@ -53,7 +54,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; expenseId: string } }
+  { params }: { params: Promise<{ id: string; expenseId: string }> }
 ) {
   try {
     // Get session token from cookies
@@ -70,8 +71,9 @@ export async function PUT(
     }
 
     const adminClient = await createAdminClient();
-    const projectId = String(params.id);
-    const expenseId = String(params.expenseId);
+    const paramsData = await params;
+    const projectId = String(paramsData.id);
+    const expenseId = String(paramsData.expenseId);
     const body = await request.json();
     const { title, category, amount, date } = body;
 
@@ -119,7 +121,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; expenseId: string } }
+  { params }: { params: Promise<{ id: string; expenseId: string }> }
 ) {
   try {
     // Get session token from cookies
@@ -136,8 +138,9 @@ export async function DELETE(
     }
 
     const adminClient = await createAdminClient();
-    const projectId = String(params.id);
-    const expenseId = String(params.expenseId);
+    const paramsData = await params;
+    const projectId = String(paramsData.id);
+    const expenseId = String(paramsData.expenseId);
 
     // First verify project ownership
     const { data: project } = await adminClient

@@ -57,10 +57,10 @@ export async function GET(request: NextRequest) {
     }
     
     // Date filtering
-    let fromDate = dateFrom ? new Date(dateFrom) : new Date()
+    const fromDate = dateFrom ? new Date(dateFrom) : new Date()
     fromDate.setMonth(fromDate.getMonth() - 1) // Default to last month
     
-    let toDate = dateTo ? new Date(dateTo) : new Date()
+    const toDate = dateTo ? new Date(dateTo) : new Date()
     
     // Get expenses
     const { data: expenses, error: expensesError } = await supabase

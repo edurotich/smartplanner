@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session token from cookies
@@ -21,7 +21,8 @@ export async function GET(
     }
 
     const adminClient = await createAdminClient();
-    const projectId = String(params.id);
+    const paramsData = await params;
+    const projectId = String(paramsData.id);
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const startDate = searchParams.get('startDate');
@@ -65,8 +66,8 @@ export async function GET(
     }
 
     // Calculate totals
-    const total = expenses?.reduce((sum, expense) => sum + expense.amount, 0) || 0;
-    const byCategory = expenses?.reduce((acc, expense) => {
+    const total = expenses?.reduce((sum: number, expense: any) => sum + expense.amount, 0) || 0;
+    const byCategory = expenses?.reduce((acc: Record<string, number>, expense: any) => {
       acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
       return acc;
     }, {} as Record<string, number>) || {};
@@ -87,7 +88,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session token from cookies
@@ -104,7 +105,8 @@ export async function POST(
     }
 
     const adminClient = await createAdminClient();
-    const projectId = String(params.id);
+    const paramsData = await params;
+    const projectId = String(paramsData.id);
     const body = await request.json();
     const { title, category, amount, date } = body;
 

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session token from cookies
@@ -22,7 +22,8 @@ export async function GET(
 
     const adminClient = await createAdminClient();
     // Extract projectId from params properly, ensure it's a string
-    const projectId = String(params.id);
+    const paramsData = await params;
+    const projectId = String(paramsData.id);
     const { searchParams } = new URL(request.url);
     const source = searchParams.get('source');
     const startDate = searchParams.get('startDate');
@@ -66,8 +67,8 @@ export async function GET(
     }
 
     // Calculate totals
-    const total = income?.reduce((sum, item) => sum + item.amount, 0) || 0;
-    const bySource = income?.reduce((acc, item) => {
+    const total = income?.reduce((sum: number, item: any) => sum + item.amount, 0) || 0;
+    const bySource = income?.reduce((acc: Record<string, number>, item: any) => {
       acc[item.source] = (acc[item.source] || 0) + item.amount;
       return acc;
     }, {} as Record<string, number>) || {};
@@ -88,7 +89,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session token from cookies
@@ -105,8 +106,8 @@ export async function POST(
     }
 
     const adminClient = await createAdminClient();
-    // Extract projectId from params properly, ensure it's a string
-    const projectId = String(params.id);
+    const paramsData = await params;
+    const projectId = String(paramsData.id);
     const body = await request.json();
     const { source, amount, date } = body;
 
@@ -136,7 +137,7 @@ export async function POST(
         project_id: projectId,
         source: source.trim(),
         amount: parseFloat(amount),
-        date: date
+        date
       })
       .select()
       .single();
