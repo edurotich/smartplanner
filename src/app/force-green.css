@@ -1,0 +1,73 @@
+/* Direct element styling for Safaricom green theme */
+
+:root {
+  --safaricom-green: #00a550;
+  --safaricom-green-light: #4cd964;
+  --safaricom-green-dark: #008642;
+}
+
+/* Make all buttons Safaricom green by default */
+button,
+.button,
+[type="button"],
+[type="submit"],
+[type="reset"],
+.btn {
+  background-color: #00a550 !important;
+  color: white !important;
+  border-color: #00a550 !important;
+}
+
+/* Override shadcn button components */
+button[data-variant="default"],
+.button[data-variant="default"] {
+  background-color: #00a550 !important;
+  color: white !important;
+}
+
+/* Handle hover states */
+button:hover,
+.button:hover,
+[type="button"]:hover,
+[type="submit"]:hover,
+[type="reset"]:hover,
+.btn:hover {
+  background-color: #008642 !important;
+  border-color: #008642 !important;
+}
+
+/* Override accent colors */
+.bg-accent,
+[data-accent="true"] {
+  background-color: #4cd964 !important;
+}
+
+/* Add Safaricom green border */
+.border-primary,
+[data-border="primary"] {
+  border-color: #00a550 !important;
+}
+
+/* Add Safaricom green text */
+.text-primary,
+[data-text="primary"] {
+  color: #00a550 !important;
+}
+
+/* Navigation active items */
+.nav-item.active,
+.nav-link.active {
+  color: #00a550 !important;
+  border-color: #00a550 !important;
+}
+
+/* Progress bars */
+.progress-bar,
+progress::-webkit-progress-value {
+  background-color: #00a550 !important;
+}
+
+/* Focus rings */
+*:focus-visible {
+  outline-color: #4cd964 !important;
+}

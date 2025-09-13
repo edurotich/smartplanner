@@ -5,6 +5,9 @@ import { Toaster } from "sonner";
 import WoodNavbar from '@/components/WoodNavbar';
 import WoodMobileNav from '@/components/WoodMobileNav';
 import "./globals.css";
+import "./safaricom-theme.css"; // Import custom Safaricom theme
+import "./tailwind-theme.css"; // Import tailwind theme
+import "./force-green.css"; // Direct element styling
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,7 +49,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#00a550", // Safaricom green
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

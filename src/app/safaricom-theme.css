@@ -1,0 +1,49 @@
+/* Safaricom green theme */
+:root {
+  --safaricom-green: #00a550;
+  --safaricom-green-light: #4cd964;
+  --safaricom-green-dark: #008642;
+}
+
+/* Override classes to add Safaricom colors */
+.btn-primary,
+.button-primary,
+[data-button="primary"],
+.bg-primary {
+  background-color: var(--safaricom-green) !important;
+}
+
+/* Override hover states */
+.btn-primary:hover,
+.button-primary:hover,
+[data-button="primary"]:hover {
+  background-color: var(--safaricom-green-dark) !important;
+}
+
+/* Override focus states */
+.btn-primary:focus,
+.button-primary:focus,
+[data-button="primary"]:focus {
+  outline-color: var(--safaricom-green-light) !important;
+}
+
+/* Add Safaricom green text utility classes */
+.text-safaricom {
+  color: var(--safaricom-green) !important;
+}
+
+.bg-safaricom {
+  background-color: var(--safaricom-green) !important;
+}
+
+.border-safaricom {
+  border-color: var(--safaricom-green) !important;
+}
+
+/* Specific component overrides */
+.card-header,
+.tabs-active,
+.progress-bar,
+.badge-primary {
+  background-color: var(--safaricom-green) !important;
+}
