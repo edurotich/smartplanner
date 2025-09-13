@@ -1,0 +1,19 @@
+<!-- This is a SVG pattern for wood grain texture -->
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <defs>
+    <pattern id="wood-grain" patternUnits="userSpaceOnUse" width="400" height="400" patternTransform="rotate(0)">
+      <rect width="400" height="400" fill="#f7f2e4"/>
+      <g opacity="0.1">
+        <path d="M0,20 C100,30 300,10 400,25" stroke="#96683a" fill="none" stroke-width="18" stroke-linecap="round"/>
+        <path d="M0,60 C150,40 250,60 400,45" stroke="#96683a" fill="none" stroke-width="22" stroke-linecap="round"/>
+        <path d="M0,120 C100,100 300,140 400,110" stroke="#96683a" fill="none" stroke-width="15" stroke-linecap="round"/>
+        <path d="M0,170 C150,190 250,160 400,195" stroke="#96683a" fill="none" stroke-width="20" stroke-linecap="round"/>
+        <path d="M0,220 C100,210 300,230 400,215" stroke="#96683a" fill="none" stroke-width="12" stroke-linecap="round"/>
+        <path d="M0,270 C150,250 250,280 400,255" stroke="#96683a" fill="none" stroke-width="25" stroke-linecap="round"/>
+        <path d="M0,330 C100,320 300,310 400,335" stroke="#96683a" fill="none" stroke-width="16" stroke-linecap="round"/>
+        <path d="M0,380 C150,390 250,360 400,375" stroke="#96683a" fill="none" stroke-width="23" stroke-linecap="round"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="400" height="400" fill="url(#wood-grain)"/>
+</svg>
