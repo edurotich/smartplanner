@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import AuthButtons from './AuthButtons';
 
 export default function WoodNavbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const pathname = usePathname();
   
   const navItems = [
@@ -22,6 +24,21 @@ export default function WoodNavbar() {
       setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener('scroll', handleScroll);
+    
+    // Check if the user is authenticated
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        });
+        setIsAuthenticated(response.ok);
+      } catch (error) {
+        setIsAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -68,6 +85,13 @@ export default function WoodNavbar() {
               <div className="ml-3 pl-3 border-l border-amber-400/30">
                 <ThemeToggle />
               </div>
+              
+              {/* Only show auth buttons if not authenticated */}
+              {!isAuthenticated && (
+                <div className="ml-3 pl-3 border-l border-amber-400/30">
+                  <AuthButtons />
+                </div>
+              )}
             </div>
           </div>
           
@@ -112,6 +136,13 @@ export default function WoodNavbar() {
           <div className="pt-4 pb-2 border-t border-amber-400/30 flex justify-center">
             <ThemeToggle />
           </div>
+          
+          {/* Auth buttons in mobile menu */}
+          {!isAuthenticated && (
+            <div className="pt-2 pb-4 flex justify-center">
+              <AuthButtons />
+            </div>
+          )}
         </div>
       </div>
     </nav>

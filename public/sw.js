@@ -21,6 +21,12 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
+  // Don't cache API requests or interfere with dialog functionality
+  if (event.request.url.includes('/api/') || 
+      event.request.url.includes('_next/data')) {
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then((response) => {

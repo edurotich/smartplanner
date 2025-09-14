@@ -309,8 +309,8 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 
                   size="lg" 
-                  className="px-8 py-3"
-                  onClick={() => router.push('/auth')}
+                  className="px-8 py-3 bg-[#00a550] hover:bg-[#008642]"
+                  onClick={() => router.push('/signup')}
                 >
                   Sign Up Free
                 </Button>
@@ -318,7 +318,7 @@ export default function HomePage() {
                   size="lg" 
                   variant="outline" 
                   className="px-8 py-3"
-                  onClick={() => router.push('/auth')}
+                  onClick={() => router.push('/login')}
                 >
                   Login
                 </Button>
